@@ -1,0 +1,18 @@
+import Fastify from 'fastify'
+import fastifyJwt from '@fastify/jwt'
+import 'dotenv/config'
+import 'reflect-metadata'
+
+const app = Fastify({ logger: true })
+
+const start = async () => {
+  try {
+    await app.listen({ port: 3000, host: '0.0.0.0' })
+    app.log.info('Server running...')
+  } catch (error) {
+    app.log.error(error)
+    process.exit(1)
+  }
+}
+
+start()
