@@ -1,15 +1,36 @@
 import Fastify from 'fastify'
-import fastifyJwt from '@fastify/jwt'
+import jwt from '@fastify/jwt'
+import cors from '@fastify/cors'
 import 'dotenv/config'
 import 'reflect-metadata'
+import { validateEnv, env } from '../config/env'
+import { AppDataSource } from './db/data-source'
 
 const app = Fastify({ logger: true })
 
 const start = async () => {
   try {
-    await app.listen({ port: 3000, host: '0.0.0.0' })
-    app.log.info('Server running...')
+    validateEnv()
+
+    await app.register(cors, {
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    })
+
+    await app.register(jwt, {
+      secret: env.jwtSecret
+    })
+
+    await AppDataSource.initialize()
+    app.log.info('Database connected')
+
+    await app.listen({ port: env.port, host: env.host })
+    app.log.info(`Server running on PORT: ${env.port}`)
   } catch (error) {
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy()
+    }
     app.log.error(error)
     process.exit(1)
   }
